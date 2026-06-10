@@ -754,7 +754,7 @@ function downloadJSON(type) {
     if (type === 'metrics') {
         dataToExport = { metrics: cachedMetrics, features: cachedFeatures };
         filename = "powercast_benchmarking_report.json";
-
+    }
 
     const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 4));
     const dlAnchorElem = document.createElement('a');
