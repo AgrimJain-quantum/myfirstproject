@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>POWERCAST AI | Command System</title>
+    <!-- Tailwind CSS (CDN configured for materials design) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Geist:wght@100;300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    
+    <!-- Plotly.js for interactive charting -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <!-- Three.js for 3D animated particle terrain -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #e5e2e1;
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Geist', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(8, 8, 8, 0.75);
+            backdrop-filter: blur(20px);
+            border: 1px solid #1A1A1A;
+            transition: all 0.3s ease;
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .active-glow {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            border-color: #ffffff;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1A1A1A;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #353434;
+        }
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            background: #2A2A2A;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 12px;
+            width: 12px;
+            background: #FFFFFF;
+            margin-top: -5px;
+            cursor: pointer;
+            border-radius: 0px;
+        }
+        input[type=range]:focus::-webkit-slider-runnable-track {
+            background: #ffffff;
+        }
+        /* Color-coded sliders for simulation page */
+        input[type=range].slider-temp::-webkit-slider-thumb {
+            background: #EF4444 !important; /* Red */
+        }
+        input[type=range].slider-temp:focus::-webkit-slider-runnable-track {
+            background: #EF4444 !important;
+        }
+        
+        input[type=range].slider-rhum::-webkit-slider-thumb {
+            background: #3B82F6 !important; /* Blue */
+        }
+        input[type=range].slider-rhum:focus::-webkit-slider-runnable-track {
+            background: #3B82F6 !important;
+        }
+        
+        input[type=range].slider-wspd::-webkit-slider-thumb {
+            background: #10B981 !important; /* Green */
+        }
+        input[type=range].slider-wspd:focus::-webkit-slider-runnable-track {
+            background: #10B981 !important;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        .dot-pulse {
+            animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        /* Grid background layout overlay */
+        .grid-bg {
+            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        /* Monochrome bar values */
+        .chart-bar {
+            background: linear-gradient(180deg, #FFFFFF 0%, #353434 100%);
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-highest": "#353434",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary": "#2f3131",
+                        "tertiary-container": "#e2e2e2",
+                        "on-primary": "#2f3131",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#c6c6c7",
+                        "outline-variant": "#444748",
+                        "on-primary-fixed": "#1a1c1c",
+                        "surface-variant": "#353434",
+                        "on-tertiary": "#2f3131",
+                        "on-surface": "#e5e2e1",
+                        "on-secondary-container": "#b4b5b5",
+                        "secondary": "#c6c6c7",
+                        "surface-container": "#201f1f",
+                        "outline": "#8e9192",
+                        "on-primary-fixed-variant": "#454747",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface": "#141313",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "inverse-primary": "#5d5f5f",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-tertiary-container": "#636565",
+                        "on-background": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-dim": "#141313",
+                        "primary-fixed": "#e2e2e2",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-primary-container": "#636565",
+                        "tertiary": "#ffffff",
+                        "primary": "#ffffff",
+                        "background": "#141313",
+                        "secondary-fixed": "#e2e2e2",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-error": "#690005",
+                        "on-surface-variant": "#c4c7c8",
+                        "inverse-surface": "#e5e2e1",
+                        "secondary-container": "#454747",
+                        "primary-container": "#e2e2e2",
+                        "error-container": "#93000a",
+                        "surface-tint": "#c6c6c7",
+                        "surface-bright": "#3a3939",
+                        "inverse-on-surface": "#313030"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "unit": "4px",
+                        "panel-gap": "1px",
+                        "container-padding": "24px",
+                        "sidebar-width": "64px",
+                        "gutter": "16px"
+                    },
+                    fontFamily: {
+                        "body-md": ["Geist"],
+                        "headline-sm": ["Space Grotesk"],
+                        "display-lg": ["Space Grotesk"],
+                        "body-lg": ["Geist"],
+                        "headline-md": ["Space Grotesk"],
+                        "code-sm": ["Geist"],
+                        "label-xs": ["Geist"]
+                    },
+                    fontSize: {
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "code-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "label-xs": ["10px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-body-md text-on-background bg-black select-none overflow-hidden h-screen flex">
+    
+    <!-- 3D Terrain Particle Background -->
+    <div id="threejs-background" class="fixed inset-0 z-0 pointer-events-none opacity-30 bg-transparent"></div>
+    <div class="fixed inset-0 grid-bg opacity-30 pointer-events-none z-1"></div>
+
+    <!-- SIDEBAR RAIL NAVIGATION -->
+    <nav class="fixed left-0 top-0 h-full w-sidebar-width bg-background border-r border-outline-variant flex flex-col items-center py-4 gap-6 z-50">
+        <div class="mb-4 mt-2">
+            <span class="text-headline-sm font-headline-md text-primary tracking-tighter cursor-pointer" onclick="switchTab('gateway')">PC</span>
+        </div>
+        <div class="flex flex-col gap-4 w-full items-center">
+            <!-- Gateway/Home -->
+            <button id="nav-gateway" onclick="switchTab('gateway')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-primary bg-surface-container-highest shadow-[0_0_15px_rgba(255,255,255,0.15)] rounded transition-all duration-200">
+                <span class="material-symbols-outlined text-[20px]">home</span>
+                <span class="text-[8px] font-bold">HOME</span>
+            </button>
+            <!-- Dashboard Overview -->
+            <button id="nav-dashboard" onclick="switchTab('dashboard')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-all duration-200">
+                <span class="material-symbols-outlined text-[20px]">dashboard</span>
+                <span class="text-[8px] font-bold">DASH</span>
+            </button>
+            <!-- Model Comparison -->
+            <button id="nav-comparison" onclick="switchTab('comparison')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-all duration-200">
+                <span class="material-symbols-outlined text-[20px]">compare_arrows</span>
+                <span class="text-[8px] font-bold">COMP</span>
+            </button>
+            <!-- Forecast Explorer -->
+            <button id="nav-explorer" onclick="switchTab('explorer')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-all duration-200">
+                <span class="material-symbols-outlined text-[20px]">explore</span>
+                <span class="text-[8px] font-bold">EXPL</span>
+            </button>
+            <!-- Forecast Simulator -->
+            <button id="nav-simulator" onclick="switchTab('simulator')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-all duration-200">
+                <span class="material-symbols-outlined text-[20px]">simulation</span>
+                <span class="text-[8px] font-bold">SIM</span>
+            </button>
+            <!-- MLOps Pipeline -->
+            <button id="nav-mlops" onclick="switchTab('mlops')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-all duration-200">
+                <span class="material-symbols-outlined text-[20px]">settings_input_component</span>
+                <span class="text-[8px] font-bold">OPS</span>
+            </button>
+            <!-- Residual Analysis -->
+            <button id="nav-residual" onclick="switchTab('residual')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-all duration-200">
+                <span class="material-symbols-outlined text-[20px]">insights</span>
+                <span class="text-[8px] font-bold">RESD</span>
+            </button>
+        </div>
+        <div class="mt-auto pb-2 flex flex-col items-center gap-3">
+            <span class="text-[8px] font-bold tracking-widest text-outline-variant rotate-90 my-4">v2.4.0</span>
+            <div class="w-8 h-8 rounded-full border border-outline flex items-center justify-center text-[10px] font-bold text-outline uppercase">
+                SA
+            </div>
+        </div>
+    </nav>
+
+    <!-- TOP APP BAR -->
+    <header class="fixed top-0 right-0 w-[calc(100%-64px)] h-16 bg-background/85 backdrop-blur-xl border-b border-outline-variant flex justify-between items-center px-6 z-40">
+        <div class="flex items-center gap-4">
+            <h1 id="page-title" class="text-headline-md font-headline-md text-primary uppercase tracking-widest">POWERCAST AI</h1>
+            <div class="h-4 w-px bg-outline-variant"></div>
+            <span id="tab-subtitle" class="text-code-sm font-code-sm text-on-surface-variant uppercase tracking-wider">Gateway Terminal</span>
+        </div>
+        <div class="flex items-center gap-6" id="header-right-default">
+            <div class="flex items-center gap-2 text-code-sm font-code-sm text-primary">
+                <span class="w-2 h-2 rounded-full bg-primary dot-pulse"></span>
+                <span>Live Grid: Stable</span>
+            </div>
+            <div class="flex items-center gap-2 text-code-sm font-code-sm text-on-surface-variant">
+                <span class="material-symbols-outlined text-[14px]">memory</span>
+                <span>System: 99.8% Health</span>
+            </div>
+            <div class="flex gap-4 border-l border-outline-variant pl-6 text-on-surface-variant">
+                <span class="material-symbols-outlined hover:text-primary cursor-pointer transition-colors" title="SCADA Integration">language</span>
+                <span class="material-symbols-outlined hover:text-primary cursor-pointer transition-colors" title="Node Status">monitor_heart</span>
+                <span class="material-symbols-outlined hover:text-primary cursor-pointer transition-colors" title="Sync Trigger" id="sync-icon">sync</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 hidden" id="header-right-residual">
+            <div class="flex gap-4 text-on-surface-variant pr-2">
+                <span class="material-symbols-outlined hover:text-primary cursor-pointer transition-colors" title="SCADA Status">sensors</span>
+                <span class="material-symbols-outlined hover:text-primary cursor-pointer transition-colors" title="Cloud Connection">cloud</span>
+                <span class="material-symbols-outlined hover:text-primary cursor-pointer transition-colors" title="Inference Host">terminal</span>
+                <span class="material-symbols-outlined hover:text-primary cursor-pointer transition-colors text-yellow-500" title="Drift Alarm">bolt</span>
+            </div>
+            <button class="bg-white text-black text-[10px] font-bold px-3 py-1 uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_10px_rgba(255,255,255,0.4)]">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                SYSTEM_READY
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="ml-[64px] pt-16 w-[calc(100%-64px)] h-screen overflow-y-auto z-10 relative no-scrollbar">
+
+        <!-- 1. GATEWAY TAB -->
+        <section id="tab-gateway" class="tab-content block p-gutter max-w-6xl mx-auto space-y-12 pb-20">
+            <div class="relative w-full h-[400px] flex flex-col items-center justify-center text-center mt-10">
+                <div class="inline-block px-3 py-1 border border-primary text-[10px] font-bold tracking-[0.2em] uppercase mb-6 animate-pulse">
+                    Advanced Energy Intelligence
+                </div>
+                <h2 class="text-display-lg font-display-lg text-primary max-w-4xl leading-none uppercase mb-6">
+                    POWERCAST AI
+                </h2>
+                <p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto mb-10">
+                    Harnessing state-of-the-art machine learning models to forecast short-term electricity load requirements with sub-1% MAE accuracy.
+                </p>
+                <div class="flex items-center gap-4">
+                    <button onclick="switchTab('dashboard')" class="bg-primary text-black px-8 py-3 font-bold tracking-tighter glow-hover transition-all duration-300">
+                        INITIALIZE COMMANDS
+                    </button>
+                    <button onclick="switchTab('simulator')" class="border border-white text-white px-8 py-3 font-bold tracking-tighter hover:bg-white/5 transition-all duration-300">
+                        SCENARIO SIMULATOR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bento Stats Panel -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-px bg-outline-variant/30 border border-outline-variant">
+                <div class="glass-panel p-6 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs text-outline-variant uppercase tracking-widest mb-4">Historical Readings</span>
+                    <span class="text-headline-md font-headline-md text-primary">315,360+</span>
+                    <span class="text-code-sm font-code-sm text-on-surface-variant mt-2">5-min Delhi Time Series</span>
+                </div>
+                <div class="glass-panel p-6 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs text-outline-variant uppercase tracking-widest mb-4">Best Model MAE</span>
+                    <span class="text-headline-md font-headline-md text-primary">37.11 MW</span>
+                    <span class="text-code-sm font-code-sm text-on-surface-variant mt-2">Linear Regression Baseline</span>
+                </div>
+                <div class="glass-panel p-6 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs text-outline-variant uppercase tracking-widest mb-4">Ensemble (XGB+LGB)</span>
+                    <span class="text-headline-md font-headline-md text-primary">55.52 MW</span>
+                    <span class="text-code-sm font-code-sm text-on-surface-variant mt-2">Inverse-RMSE Blend</span>
+                </div>
+                <div class="glass-panel p-6 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs text-outline-variant uppercase tracking-widest mb-4">R² Confidence</span>
+                    <span class="text-headline-md font-headline-md text-primary">0.9960 μ</span>
+                    <span class="text-code-sm font-code-sm text-on-surface-variant mt-2">Variance Capture Rate</span>
+                </div>
+            </div>
+
+            <!-- Navigation Cards -->
+            <div class="space-y-6 pt-10">
+                <div class="flex justify-between items-end border-b border-outline-variant pb-4">
+                    <h3 class="text-headline-sm font-headline-md text-primary uppercase">System Access Hub</h3>
+                    <span class="text-code-sm font-code-sm text-outline-variant">SELECT MODULE FOR TELEMETRY</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div onclick="switchTab('dashboard')" class="group glass-panel p-8 cursor-pointer hover:border-primary transition-all duration-300 relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <span class="material-symbols-outlined text-[100px]">dashboard</span>
+                        </div>
+                        <span class="material-symbols-outlined text-primary text-[32px] mb-8">dashboard</span>
+                        <h4 class="text-headline-sm font-headline-md text-primary mb-2">Executive Dashboard</h4>
+                        <p class="text-body-md text-on-surface-variant mb-6">Real-time visualization of active node metrics, model rankings, and actual vs predicted load.</p>
+                        <div class="flex items-center text-code-sm text-primary font-bold group-hover:gap-4 transition-all duration-300">
+                            ACCESS MODULE <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </div>
+                    </div>
+                    <div onclick="switchTab('comparison')" class="group glass-panel p-8 cursor-pointer hover:border-primary transition-all duration-300 relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <span class="material-symbols-outlined text-[100px]">compare_arrows</span>
+                        </div>
+                        <span class="material-symbols-outlined text-primary text-[32px] mb-8">compare_arrows</span>
+                        <h4 class="text-headline-sm font-headline-md text-primary mb-2">Benchmarking Lab</h4>
+                        <p class="text-body-md text-on-surface-variant mb-6">Side-by-side performance evaluation of boosting algorithms, neural networks, and ensembles.</p>
+                        <div class="flex items-center text-code-sm text-primary font-bold group-hover:gap-4 transition-all duration-300">
+                            ACCESS MODULE <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </div>
+                    </div>
+                    <div onclick="switchTab('simulator')" class="group glass-panel p-8 cursor-pointer hover:border-primary transition-all duration-300 relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <span class="material-symbols-outlined text-[100px]">simulation</span>
+                        </div>
+                        <span class="material-symbols-outlined text-primary text-[32px] mb-8">simulation</span>
+                        <h4 class="text-headline-sm font-headline-md text-primary mb-2">Scenario Simulator</h4>
+                        <p class="text-body-md text-on-surface-variant mb-6">What-if forecasting tool to predict load impact based on temperature, weekday, and humidity fluctuations.</p>
+                        <div class="flex items-center text-code-sm text-primary font-bold group-hover:gap-4 transition-all duration-300">
+                            ACCESS MODULE <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. EXECUTIVE DASHBOARD TAB -->
+        <section id="tab-dashboard" class="tab-content hidden p-gutter space-y-gutter pb-20">
+            <!-- Metrics Row -->
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                <div class="glass-panel p-4 flex flex-col justify-between border-l-2 border-l-primary">
+                    <span id="dash-best-model-label" class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Top Performer</span>
+                    <span class="text-headline-sm font-headline-md text-primary font-bold leading-tight" id="dash-best-model">LR Model</span>
+                    <span id="dash-best-model-status" class="text-code-sm text-primary/60 flex items-center gap-1 mt-1">
+                        <span class="material-symbols-outlined text-[14px]">check_circle</span> Optimal
+                    </span>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span id="dash-rmse-label" class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Min RMSE</span>
+                    <span class="text-headline-sm font-headline-sm text-primary" id="dash-rmse">87.70 MW</span>
+                    <span class="text-code-sm text-on-surface-variant">Delhi Test Set</span>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span id="dash-mae-label" class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Min MAE</span>
+                    <span class="text-headline-sm font-headline-sm text-primary" id="dash-mae">37.11 MW</span>
+                    <span class="text-code-sm text-primary/60">Nominal Deviation</span>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span id="dash-mape-label" class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">MAPE Error</span>
+                    <span class="text-headline-sm font-headline-sm text-primary" id="dash-mape">0.87 %</span>
+                    <span class="text-code-sm text-on-surface-variant">Mean Variance</span>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span id="dash-r2-label" class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Max R² Score</span>
+                    <span class="text-headline-sm font-headline-sm text-primary" id="dash-r2">0.9960</span>
+                    <span class="text-code-sm text-primary/60">Fit Confidence</span>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Telemetry Status</span>
+                    <span class="text-headline-sm font-headline-sm text-primary">Active</span>
+                    <div class="w-full h-1.5 bg-outline-variant mt-2">
+                        <div class="h-full bg-primary" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plots and Leaderboard -->
+            <div class="grid grid-cols-12 gap-gutter">
+                <!-- Center Analytics Panel -->
+                <div class="col-span-12 lg:col-span-8 space-y-gutter">
+                    <!-- Realtime Forecast Plot -->
+                    <div class="glass-panel p-6 h-[400px] flex flex-col overflow-hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-code-sm font-code-sm uppercase tracking-widest text-primary flex items-center gap-2">
+                                <span class="w-2 h-2 bg-primary"></span> Power Demand Forecasting Variance (24 Hours)
+                            </h3>
+                            <div class="flex gap-4 text-label-xs text-on-surface-variant">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-primary"></span> Actual</span>
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-[#6C3483]"></span> <span id="dash-chart-model-name">Ensemble</span></span>
+                            </div>
+                        </div>
+                        <div class="flex-1 w-full" id="plotly-realtime-chart">
+                            <!-- Plotly Render -->
+                        </div>
+                    </div>
+
+                    <!-- Dataset & training facts -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                        <div class="glass-panel p-4 border-l border-outline-variant">
+                            <span class="text-label-xs text-on-surface-variant uppercase mb-2 block">Delhi Grid Specs</span>
+                            <div class="space-y-2 text-code-sm">
+                                <div class="flex justify-between border-b border-outline-variant/30 pb-1">
+                                    <span>Resolution</span> <span class="font-bold">5-Minute</span>
+                                </div>
+                                <div class="flex justify-between border-b border-outline-variant/30 pb-1">
+                                    <span>Total Rows</span> <span class="font-bold">315,360</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Test Range</span> <span class="font-bold">2024 Year</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-4 border-l border-outline-variant">
+                            <span class="text-label-xs text-on-surface-variant uppercase mb-2 block">Optimisation Summary</span>
+                            <div class="space-y-2 text-code-sm">
+                                <div class="flex justify-between border-b border-outline-variant/30 pb-1">
+                                    <span>Optuna Trials</span> <span class="font-bold">50 per Booster</span>
+                                </div>
+                                <div class="flex justify-between border-b border-outline-variant/30 pb-1">
+                                    <span>Validation CV</span> <span class="font-bold">3-Fold Time-Split</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>LSTM Epochs</span> <span class="font-bold">6 (Early Stopped)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-4 border-l border-outline-variant flex flex-col justify-between">
+                            <span class="text-label-xs text-on-surface-variant uppercase block">FastAPI Server Load</span>
+                            <div class="flex items-center gap-4 mt-2">
+                                <div class="relative w-12 h-12">
+                                    <svg class="w-full h-full transform -rotate-90">
+                                        <circle class="text-surface-container-highest" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-width="4"></circle>
+                                        <circle class="text-primary" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-dasharray="125.6" stroke-dashoffset="12.56" stroke-width="4"></circle>
+                                    </svg>
+                                    <div class="absolute inset-0 flex items-center justify-center text-[10px]">90%</div>
+                                </div>
+                                <div class="text-code-sm">
+                                    <div class="text-primary">RAM: 1.2 GB</div>
+                                    <div class="text-on-surface-variant">Inference: &lt;12ms</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar Leaderboard -->
+                <div class="col-span-12 lg:col-span-4 space-y-gutter flex flex-col">
+                    <div class="glass-panel border border-outline-variant flex-1 flex flex-col min-h-[300px]">
+                        <div class="px-4 py-2 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+                            <span class="text-label-xs uppercase tracking-widest text-primary font-bold">In-Memory Leaderboard</span>
+                        </div>
+                        <div class="flex-1 overflow-x-auto">
+                            <table class="w-full text-code-sm text-left">
+                                <thead class="bg-surface-container-lowest border-b border-outline-variant text-on-surface-variant">
+                                    <tr>
+                                        <th class="px-4 py-2 text-[10px] uppercase font-bold">Model</th>
+                                        <th class="px-4 py-2 text-[10px] uppercase font-bold text-right">RMSE</th>
+                                        <th class="px-4 py-2 text-[10px] uppercase font-bold text-right">R² Fit</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-outline-variant/30" id="dash-leaderboard-rows">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- mini bar chart representation -->
+                    <div class="glass-panel p-4 flex flex-col">
+                        <span class="text-code-sm font-code-sm uppercase tracking-widest text-primary mb-3">Model Accuracy Comparison</span>
+                        <div class="h-24 flex items-end gap-2" id="mini-bar-chart">
+                            <!-- Rendered dynamically -->
+                        </div>
+                        <div class="flex justify-between mt-2 text-label-xs text-on-surface-variant">
+                            <span>POOREST (KNN)</span>
+                            <span>BEST (LR)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. MODEL COMPARISON TAB -->
+        <section id="tab-comparison" class="tab-content hidden p-gutter space-y-gutter pb-20">
+            <!-- Filter Bar -->
+            <div class="flex justify-between items-center border border-outline-variant bg-surface-container-lowest px-4 py-3 h-14">
+                <div class="flex items-center gap-4">
+                    <span class="text-label-xs font-bold text-primary bg-primary/10 px-2 py-1 uppercase border border-primary/20">Lab Environment</span>
+                    <span class="text-code-sm text-outline-variant">ACTIVE DATASET: Delhi_5Min_Weather_Grid</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="downloadJSON('metrics')" class="border border-white/20 px-4 py-1 text-code-sm font-code-sm uppercase hover:bg-white hover:text-black transition-all">Export JSON</button>
+                </div>
+            </div>
+
+            <!-- Full stats grid -->
+            <div class="grid grid-cols-12 gap-gutter">
+                <!-- Metrics Table -->
+                <div class="col-span-12 lg:col-span-9 bg-black border border-outline-variant overflow-hidden flex flex-col">
+                    <header class="border-b border-outline-variant px-4 py-3 flex justify-between items-center bg-surface-container-low">
+                        <h3 class="text-label-xs font-label-xs uppercase tracking-widest text-primary">Evaluated Forecast Metric Grid</h3>
+                    </header>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left font-code-sm text-code-sm">
+                            <thead class="bg-surface-container-lowest border-b border-outline-variant text-on-surface-variant text-[10px] font-bold uppercase">
+                                <tr>
+                                    <th class="px-4 py-3">Model Candidate</th>
+                                    <th class="px-4 py-3 text-right">MAE (MW)</th>
+                                    <th class="px-4 py-3 text-right">RMSE (MW)</th>
+                                    <th class="px-4 py-3 text-right">R² Confidence</th>
+                                    <th class="px-4 py-3 text-right">MAPE (%)</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#1A1A1A]" id="comp-metrics-table">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Rail: Feature Importance list -->
+                <div class="col-span-12 lg:col-span-3 glass-panel p-4 flex flex-col justify-between min-h-[400px]">
+                    <div>
+                        <span class="text-label-xs font-label-xs text-primary/50 tracking-widest uppercase mb-2 block">Feature weights</span>
+                        <h3 class="text-headline-sm font-headline-sm text-primary mb-4">Top predictors</h3>
+                        <div class="space-y-3" id="comp-features-list">
+                            <!-- Rendered dynamically -->
+                        </div>
+                    </div>
+                    <div class="text-label-xs text-on-surface-variant italic opacity-60 mt-4 border-t border-outline-variant/30 pt-3">
+                        *Lag and rolling mean parameters dominate the predictive accuracy.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual comparisons -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                <!-- Plotly error distributions -->
+                <div class="glass-panel p-6 flex flex-col h-[350px] overflow-hidden">
+                    <span class="text-code-sm font-code-sm uppercase tracking-widest text-primary mb-4">Model Performance Metric Barplot</span>
+                    <div class="flex-1 w-full" id="plotly-metrics-comparison"></div>
+                </div>
+                <!-- Plotly feature importances -->
+                <div class="glass-panel p-6 flex flex-col h-[350px] overflow-hidden">
+                    <span class="text-code-sm font-code-sm uppercase tracking-widest text-primary mb-4">Top Feature Importances (Random Forest / Boosters)</span>
+                    <div class="flex-1 w-full" id="plotly-feature-variance"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. FORECAST EXPLORER TAB -->
+        <section id="tab-explorer" class="tab-content hidden p-gutter space-y-gutter pb-20">
+            <!-- Toolbar / Limits -->
+            <div class="flex justify-between items-center border border-outline-variant bg-surface-container-lowest px-4 py-3 h-14">
+                <div class="flex items-center gap-4">
+                    <span class="text-label-xs font-bold text-primary bg-primary/10 px-2 py-1 uppercase border border-primary/20">Explorer Controls</span>
+                    <span class="text-code-sm text-outline-variant">VIEWING LAST 7 DAYS OF TEST WINDOW</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="updateExplorerLimit(288)" class="px-3 py-1 bg-surface-container-high text-on-surface-variant hover:text-primary border border-outline-variant text-code-sm font-bold uppercase transition-colors">1 Day</button>
+                    <button onclick="updateExplorerLimit(576)" class="px-3 py-1 bg-surface-container-high text-on-surface-variant hover:text-primary border border-outline-variant text-code-sm font-bold uppercase transition-colors">2 Days</button>
+                    <button onclick="updateExplorerLimit(2016)" class="px-3 py-1 bg-primary text-background border border-primary text-code-sm font-bold uppercase transition-colors">7 Days</button>
+                </div>
+            </div>
+
+            <!-- Detailed actual vs predictions Plotly curve -->
+            <div class="glass-panel p-6 h-[480px] flex flex-col overflow-hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="text-code-sm font-code-sm uppercase tracking-widest text-primary">High-Resolution Power Load Curve</h3>
+                        <p class="text-xs text-on-surface-variant">Zoom, pan, and hover directly on the Plotly data lines.</p>
+                    </div>
+                    <div class="text-label-xs text-outline-variant">Node: Delhi Grid Central</div>
+                </div>
+                <div class="flex-1 w-full" id="plotly-explorer-chart"></div>
+            </div>
+
+            <!-- Zoom focus cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span class="text-label-xs text-outline-variant uppercase mb-2 block">Peak Load Analysis</span>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-code-sm">
+                            <span>Max Actual Peak</span> <span class="font-bold text-white">5,021 MW</span>
+                        </div>
+                        <div class="flex justify-between text-code-sm">
+                            <span>Max Predicted Peak</span> <span class="font-bold text-white">5,032 MW</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span class="text-label-xs text-outline-variant uppercase mb-2 block">Auto-Correlation</span>
+                    <p class="text-code-sm text-on-surface-variant">
+                        Correlation coefficient between load and historical lag (t-288) is <strong class="text-white">0.99</strong>, proving temporal continuity.
+                    </p>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span class="text-label-xs text-outline-variant uppercase mb-2 block">LSTM Sequence Evaluation</span>
+                    <p class="text-code-sm text-on-surface-variant">
+                        LSTM captures trend directions but underperforms simple models with a test MAE of <strong class="text-white">311.9 MW</strong> due to sequence noise.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. FORECAST SIMULATOR TAB -->
+        <section id="tab-simulator" class="tab-content hidden p-gutter space-y-gutter pb-20 h-[calc(100vh-100px)] flex flex-col">
+            <div class="grid grid-cols-12 gap-px bg-outline-variant flex-1 border border-outline-variant min-h-[480px]">
+                
+                <!-- LEFT PANEL: Variable Controls -->
+                <div class="col-span-12 lg:col-span-3 bg-background flex flex-col p-6 overflow-y-auto no-scrollbar justify-between">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-2 border-b border-outline-variant/35 pb-2">
+                            <span class="material-symbols-outlined text-primary text-sm">tune</span>
+                            <h2 class="text-label-xs font-label-xs uppercase tracking-widest text-on-surface-variant">Variable Inputs</h2>
+                        </div>
+                        
+                        <!-- Temp slider -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-end text-code-sm">
+                                <label class="text-[10px] font-bold text-red-500 uppercase">Temperature (°C)</label>
+                                <span class="text-headline-sm font-bold text-red-500" id="sim-temp-val">28</span>
+                            </div>
+                            <input type="range" class="w-full slider-temp" id="sim-temp" min="-5" max="50" step="0.5" value="28" oninput="document.getElementById('sim-temp-val').innerText = this.value"/>
+                        </div>
+
+                        <!-- Hum slider -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-end text-code-sm">
+                                <label class="text-[10px] font-bold text-blue-500 uppercase">Relative Humidity (%)</label>
+                                <span class="text-headline-sm font-bold text-blue-500" id="sim-rhum-val">60</span>
+                            </div>
+                            <input type="range" class="w-full slider-rhum" id="sim-rhum" min="0" max="100" value="60" oninput="document.getElementById('sim-rhum-val').innerText = this.value"/>
+                        </div>
+
+                        <!-- Pres slider -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-end text-code-sm">
+                                <label class="text-[10px] font-bold text-on-surface-variant uppercase">Pressure (hPa)</label>
+                                <span class="text-headline-sm font-bold text-primary" id="sim-pres-val">1008</span>
+                            </div>
+                            <input type="range" class="w-full" id="sim-pres" min="950" max="1050" value="1008" oninput="document.getElementById('sim-pres-val').innerText = this.value"/>
+                        </div>
+
+                        <!-- Wind slider -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-end text-code-sm">
+                                <label class="text-[10px] font-bold text-emerald-500 uppercase">Wind Speed (km/h)</label>
+                                <span class="text-headline-sm font-bold text-emerald-500" id="sim-wspd-val">8.5</span>
+                            </div>
+                            <input type="range" class="w-full slider-wspd" id="sim-wspd" min="0" max="80" step="0.5" value="8.5" oninput="document.getElementById('sim-wspd-val').innerText = this.value"/>
+                        </div>
+
+                        <!-- Hour slider -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-end text-code-sm">
+                                <label class="text-[10px] font-bold text-on-surface-variant uppercase">Hour of Day (24h)</label>
+                                <span class="text-headline-sm font-bold text-primary" id="sim-hour-val">18</span>
+                            </div>
+                            <input type="range" class="w-full" id="sim-hour" min="0" max="23" value="18" oninput="document.getElementById('sim-hour-val').innerText = this.value; checkPeakHourFlag();"/>
+                        </div>
+
+                        <!-- Weekday selector -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-on-surface-variant uppercase block">Weekday</label>
+                            <select id="sim-weekday" class="bg-black border border-outline-variant text-primary font-code-sm text-body-md focus:border-primary focus:ring-0 w-full py-1.5 px-3">
+                                <option value="0">Monday</option>
+                                <option value="1">Tuesday</option>
+                                <option value="2" selected>Wednesday</option>
+                                <option value="3">Thursday</option>
+                                <option value="4">Friday</option>
+                                <option value="5">Saturday</option>
+                                <option value="6">Sunday</option>
+                            </select>
+                        </div>
+
+                        <!-- Peak Hour Checkbox (gated automatically by hour slider but toggleable) -->
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="sim-peak" class="bg-black border-outline-variant text-primary focus:ring-0 focus:ring-offset-0 rounded-none w-4 h-4" checked/>
+                            <label for="sim-peak" class="text-[10px] font-bold text-on-surface-variant uppercase">Peak Demand Period (18-21h)</label>
+                        </div>
+                    </div>
+
+                    <div class="pt-8">
+                        <button onclick="runSimulation()" class="w-full py-4 bg-primary text-background font-bold text-label-xs tracking-widest hover:active-glow transition-all">
+                            GENERATE SIMULATION
+                        </button>
+                        <button onclick="resetSimulationDefaults()" class="w-full py-2.5 mt-2 border border-outline-variant text-primary font-bold text-[10px] tracking-widest hover:bg-surface-container-high transition-all">
+                            RESET DEFAULTS
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CENTER PANEL: Interactive Three.js Visual Viewport -->
+                <div class="col-span-12 lg:col-span-6 bg-surface-container-lowest relative flex flex-col items-center justify-center overflow-hidden border-x border-outline-variant">
+                    <!-- HUD overlay grids -->
+                    <div class="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between z-10">
+                        <div class="relative w-full flex flex-col items-center gap-2 h-20">
+                            <div class="absolute left-0 top-0 w-16 h-16 border-l border-t border-white/20"></div>
+                            <span class="text-[10px] tracking-[0.2em] font-bold text-primary bg-black/80 border border-white/10 px-4 py-1.5 z-20 h-fit">
+                                TELEMETRY TARGET: NEURAL-FLUX-SIMULATOR
+                            </span>
+                            <div class="flex gap-4 text-[9px] font-bold tracking-wider z-20">
+                                <span class="flex items-center gap-1.5 text-red-500 bg-black/85 border border-red-500/20 px-2.5 py-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_6px_#EF4444]"></span> TEMP (R)
+                                </span>
+                                <span class="flex items-center gap-1.5 text-emerald-500 bg-black/85 border border-emerald-500/20 px-2.5 py-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10B981]"></span> WIND (G)
+                                </span>
+                                <span class="flex items-center gap-1.5 text-blue-500 bg-black/85 border border-blue-500/20 px-2.5 py-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_6px_#3B82F6]"></span> HUMIDITY (B)
+                                </span>
+                            </div>
+                            <div class="absolute right-0 top-0 w-16 h-16 border-r border-t border-white/20"></div>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <div class="w-16 h-16 border-l border-b border-white/20"></div>
+                            <div class="w-16 h-16 border-r border-b border-white/20"></div>
+                        </div>
+                    </div>
+                    <!-- Internal 3D terrain canvas will lock here -->
+                    <div id="sim-threejs-container" class="w-full h-full absolute inset-0 z-0 opacity-60"></div>
+                </div>
+
+                <!-- RIGHT PANEL: Live Inference results output -->
+                <div class="col-span-12 lg:col-span-3 bg-background p-6 flex flex-col justify-between overflow-y-auto no-scrollbar">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-2 border-b border-outline-variant/35 pb-2">
+                            <span class="material-symbols-outlined text-primary text-sm">monitoring</span>
+                            <h2 class="text-label-xs font-label-xs uppercase tracking-widest text-on-surface-variant">Inference Output</h2>
+                        </div>
+
+                        <!-- Real-time calculation output box -->
+                        <div class="glass-panel p-4 flex flex-col gap-1 border-primary/20 neon-edge holographic-glow">
+                            <span class="text-label-xs text-on-surface-variant uppercase">Ensemble Forecast</span>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-[42px] font-bold text-primary leading-none" id="sim-pred-ensemble">----</span>
+                                <span class="text-headline-sm font-bold text-primary/60">MW</span>
+                            </div>
+                        </div>
+
+                        <!-- Models breakdown -->
+                        <div class="space-y-4 pt-2">
+                            <span class="text-[10px] font-bold text-on-surface-variant uppercase block border-b border-outline-variant/30 pb-1">Predictions by Model</span>
+                            <div class="space-y-2 text-code-sm">
+                                <div class="flex justify-between items-center p-2 bg-black border border-outline-variant">
+                                    <span>XGBoost (Tuned)</span>
+                                    <span class="font-bold text-white" id="sim-pred-xgb">--- MW</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-black border border-outline-variant">
+                                    <span>LightGBM (Tuned)</span>
+                                    <span class="font-bold text-white" id="sim-pred-lgb">--- MW</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-black border border-outline-variant">
+                                    <span>Random Forest</span>
+                                    <span class="font-bold text-white" id="sim-pred-rf">--- MW</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-8">
+                        <button onclick="downloadJSON('prediction')" class="w-full py-3 border border-primary text-primary text-label-xs tracking-widest hover:bg-primary hover:text-background transition-all">
+                            EXPORT INFERENCE REPORT
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What-if scenarios analysis ribbon -->
+            <div class="h-44 border-t border-outline-variant bg-surface-container-lowest p-gutter flex gap-4 overflow-x-auto no-scrollbar">
+                <div class="flex-shrink-0 flex flex-col justify-center border-r border-outline-variant pr-gutter">
+                    <h2 class="text-label-xs font-label-xs uppercase tracking-[0.2em] text-primary mb-1">Grid Stress Scenarios</h2>
+                    <p class="text-code-sm font-code-sm text-on-surface-variant max-w-[150px]">Pre-calculated extreme event modeling.</p>
+                </div>
+                <!-- Card 1 -->
+                <div onclick="applyScenario(38.0, 75.0, 1005.0, 5.0, 19, 2, true)" class="flex-shrink-0 w-80 glass-panel p-4 flex flex-col justify-between hover:border-primary transition-all cursor-pointer group">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 border border-primary/20">SUMMER PEAK ANOMALY</span>
+                        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+                    </div>
+                    <p class="text-body-sm text-on-surface mt-2">Extreme Heat (38°C) + High Humidity during Peak hour.</p>
+                    <div class="flex justify-between items-end mt-4">
+                        <span class="text-code-sm text-on-surface-variant">Estimated Load</span>
+                        <span class="text-headline-sm font-bold text-primary">3,800+ MW</span>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div onclick="applyScenario(12.0, 40.0, 1018.0, 25.0, 8, 6, false)" class="flex-shrink-0 w-80 glass-panel p-4 flex flex-col justify-between hover:border-primary transition-all cursor-pointer group">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 border border-primary/20">WINTER SUNRISE SURGE</span>
+                        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+                    </div>
+                    <p class="text-body-sm text-on-surface mt-2">Cold Wave (12°C) + High Wind Speed at 8:00 AM on Sunday.</p>
+                    <div class="flex justify-between items-end mt-4">
+                        <span class="text-code-sm text-on-surface-variant">Estimated Load</span>
+                        <span class="text-headline-sm font-bold text-primary">1,900+ MW</span>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div onclick="applyScenario(25.0, 50.0, 1012.0, 10.0, 14, 5, false)" class="flex-shrink-0 w-80 glass-panel p-4 flex flex-col justify-between hover:border-primary transition-all cursor-pointer group">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 border border-primary/20">NOMINAL WEEKEND OFF-PEAK</span>
+                        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
+                    </div>
+                    <p class="text-body-sm text-on-surface mt-2">Mild temperature (25°C) at 2:00 PM on Saturday.</p>
+                    <div class="flex justify-between items-end mt-4">
+                        <span class="text-code-sm text-on-surface-variant">Estimated Load</span>
+                        <span class="text-headline-sm font-bold text-primary">2,400+ MW</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. MLOPS PIPELINE TAB -->
+        <section id="tab-mlops" class="tab-content hidden p-gutter space-y-gutter pb-20">
+            <!-- Lifecycle Flow Banner -->
+            <div class="glass-panel p-6 flex flex-col gap-6">
+                <div class="flex justify-between items-center border-b border-outline-variant/30 pb-3">
+                    <h2 class="text-headline-sm font-headline-sm uppercase tracking-wider text-primary">SCADA Architecture Lifecycle</h2>
+                    <span class="text-code-sm text-on-surface-variant px-2 py-1 border border-outline-variant uppercase">Sequential Workflow Active</span>
+                </div>
+                <div class="relative flex items-center justify-between gap-2 overflow-x-auto pb-2 scroll-hide z-10">
+                    <div class="relative z-10 flex flex-col items-center gap-2 min-w-[120px]">
+                        <div class="w-12 h-12 bg-surface-container border border-primary flex items-center justify-center holographic-glow">
+                            <span class="material-symbols-outlined text-primary">database</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase text-primary">Raw Data Ingestion</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-2 min-w-[120px]">
+                        <div class="w-12 h-12 bg-surface-container border border-primary flex items-center justify-center holographic-glow">
+                            <span class="material-symbols-outlined text-primary">precision_manufacturing</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase text-primary">Feature Engineering</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-2 min-w-[120px]">
+                        <div class="w-12 h-12 bg-surface-container border border-primary flex items-center justify-center holographic-glow">
+                            <span class="material-symbols-outlined text-primary">model_training</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase text-primary">Train Boosters</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-2 min-w-[120px]">
+                        <div class="w-12 h-12 bg-surface-container border border-primary flex items-center justify-center holographic-glow">
+                            <span class="material-symbols-outlined text-primary">auto_graph</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase text-primary">Optuna Trials</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-2 min-w-[120px]">
+                        <div class="w-12 h-12 bg-surface-container border border-primary flex items-center justify-center holographic-glow">
+                            <span class="material-symbols-outlined text-primary">inventory_2</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase text-primary">Registry Lock</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center gap-2 min-w-[120px]">
+                        <div class="w-12 h-12 bg-surface-container border border-outline-variant flex items-center justify-center">
+                            <span class="material-symbols-outlined">rocket_launch</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase text-on-surface-variant">Live Deployment</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optimization History and Loss Curve Plots -->
+            <div class="grid grid-cols-12 gap-gutter">
+                <!-- Training monitors (Optuna curves and LSTM losses) -->
+                <div class="col-span-12 lg:col-span-8 space-y-gutter">
+                    <div class="glass-panel p-6 h-[380px] flex flex-col overflow-hidden">
+                        <div class="flex justify-between items-center mb-4 bg-surface-container-low border-b border-outline-variant px-4 py-2">
+                            <span class="text-code-sm font-code-sm uppercase tracking-widest text-primary">Optuna Search Convergence (XGBoost vs LightGBM)</span>
+                            <span class="text-label-xs text-on-surface-variant">Trials: 50 each</span>
+                        </div>
+                        <div class="flex-1 w-full" id="plotly-optuna-chart"></div>
+                    </div>
+
+                    <div class="glass-panel p-6 h-[300px] flex flex-col overflow-hidden">
+                        <div class="flex justify-between items-center mb-4 bg-surface-container-low border-b border-outline-variant px-4 py-2">
+                            <span class="text-code-sm font-code-sm uppercase tracking-widest text-primary">LSTM Neural Network Loss Curve History</span>
+                        </div>
+                        <div class="flex-1 w-full" id="plotly-lstm-loss-chart"></div>
+                    </div>
+                </div>
+
+                <!-- MLOps side logs / status panel -->
+                <div class="col-span-12 lg:col-span-4 space-y-gutter flex flex-col justify-between">
+                    <!-- Container Status -->
+                    <div class="glass-panel p-6">
+                        <h3 class="text-headline-sm font-headline-sm text-primary uppercase border-b border-outline-variant pb-2 mb-4">Worker Clusters</h3>
+                        <div class="space-y-4 text-code-sm">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_white]"></span>
+                                    <span>Inference Host #1 (Local)</span>
+                                </div>
+                                <span class="text-primary font-bold">ONLINE</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_white]"></span>
+                                    <span>Optuna In-Memory Registry</span>
+                                </div>
+                                <span class="text-primary font-bold">STABLE</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_white]"></span>
+                                    <span>SCADA Sync Hook</span>
+                                </div>
+                                <span class="text-primary font-bold">ONLINE</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_white]"></span>
+                                    <span>Dataset Tracker</span>
+                                </div>
+                                <span class="text-primary font-bold">ONLINE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stream Console Logs -->
+                    <div class="glass-panel bg-black p-4 border-t-2 border-primary flex-1 min-h-[300px] flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-label-xs font-label-xs text-primary uppercase font-bold tracking-widest flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[14px]">terminal</span> Telemetry Stream
+                            </span>
+                            <span class="w-1.5 h-1.5 bg-primary rounded-full dot-pulse"></span>
+                        </div>
+                        <div id="mlops-terminal-logs" class="flex-1 overflow-y-auto font-mono text-[11px] text-on-surface-variant/80 space-y-1.5 pr-2">
+                            <!-- Streamed logs append here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. RESIDUAL ANALYSIS TAB -->
+        <section id="tab-residual" class="tab-content hidden p-gutter space-y-gutter pb-20">
+            <!-- Top Info Bar -->
+            <div class="flex justify-between items-center border border-outline-variant bg-surface-container-lowest px-4 py-3 h-14">
+                <div class="flex items-center gap-4">
+                    <span class="text-label-xs font-bold text-primary bg-primary/10 px-2 py-1 uppercase border border-primary/20">Diagnostics Mode</span>
+                    <span class="text-code-sm text-outline-variant">SYSTEM NODE: RESIDUAL_LAB_OS // v4.0.2-ALPHA</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[9px] border border-primary text-primary px-2.5 py-1 font-bold uppercase tracking-wider">● SYSTEM_READY</span>
+                </div>
+            </div>
+
+            <!-- Subheader -->
+            <div class="space-y-1">
+                <h2 class="text-headline-md font-headline-md text-primary tracking-widest uppercase">Residual Analysis Laboratory</h2>
+                <p class="text-code-sm text-on-surface-variant">UNDERSTANDING MODEL ERRORS, BIASES, AND FORECASTING RELIABILITY</p>
+            </div>
+
+            <!-- KPI Metrics Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Total Predictions</span>
+                    <span class="text-headline-sm font-headline-sm text-primary font-bold leading-tight" id="res-total-preds">----</span>
+                    <span class="text-code-sm text-on-surface-variant mt-1">Interval: Last 300</span>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Mean Residual (M)</span>
+                    <span class="text-headline-sm font-headline-sm text-primary" id="res-mean-residual">---- MW</span>
+                    <span class="text-code-sm text-primary/60 mt-1">Bias Offset: Negligible</span>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Residual Variance (I²)</span>
+                    <span class="text-headline-sm font-headline-sm text-primary" id="res-variance">----</span>
+                    <span class="text-code-sm text-primary/60 mt-1">Confidence: High</span>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <span class="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Best Error Model</span>
+                    <span class="text-headline-sm font-headline-sm text-primary font-bold" style="font-size: 15px;" id="res-best-model">----</span>
+                    <span class="text-code-sm text-on-surface-variant mt-1">Stability Rank: #1</span>
+                </div>
+            </div>
+
+            <!-- Main Bivariate Plot -->
+            <div class="glass-panel p-6 h-[480px] flex flex-col overflow-hidden relative">
+                <div class="flex justify-between items-center mb-4 border-b border-outline-variant/30 pb-3">
+                    <h3 class="text-code-sm font-code-sm uppercase tracking-widest text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px]">insights</span> Residual Bivariate Analysis
+                    </h3>
+                    <div class="flex gap-6 text-[10px] font-bold uppercase tracking-wider items-center">
+                        <button id="res-toggle-simple" onclick="toggleResidualGroup('simple')" class="text-on-surface-variant hover:text-primary pb-1 transition-all border-b-2 border-transparent">Simple Models</button>
+                        <button id="res-toggle-advanced" onclick="toggleResidualGroup('advanced')" class="text-primary border-b-2 border-primary pb-1 transition-all">Advanced Models</button>
+                    </div>
+                </div>
+
+                <!-- Viewport Container with In-graph overlays -->
+                <div class="flex-1 w-full relative">
+                    <!-- Plotly Graph -->
+                    <div id="plotly-residual-bivariate" class="w-full h-full absolute inset-0 z-0"></div>
+
+                    <!-- Interactive HUD Legend / Overlay values -->
+                    <div class="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between z-10">
+                        <div class="flex justify-between items-start">
+                            <div class="flex flex-col gap-2 items-start pointer-events-auto">
+                                <div class="text-[9px] font-bold text-black bg-white px-2.5 py-1 uppercase">
+                                    Residuals
+                                </div>
+                                <div class="bg-black/95 border border-outline-variant/50 p-2 text-[9px] font-mono text-on-surface-variant flex flex-col gap-1.5 w-36" id="res-custom-legend">
+                                    <!-- Populated dynamically in JS -->
+                                </div>
+                            </div>
+                            <div class="bg-black/90 border border-outline-variant/50 p-2 text-[9px] font-mono text-on-surface-variant flex flex-col gap-1 w-44 pointer-events-auto">
+                                <div class="flex justify-between">
+                                    <span>ENSEMBLE_WEIGHT:</span> <span class="text-white font-bold" id="res-hud-weight">0.842</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>OUTLIER_DENSITY:</span> <span class="text-white font-bold" id="res-hud-outliers">0.02%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>DRIFT_COEFFICIENT:</span> <span class="text-white font-bold" id="res-hud-drift">1.024</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <div class="text-[9px] font-mono text-outline-variant">
+                                X-AXIS: PREDICTED LOAD (GW)<br/>
+                                Y-AXIS: RESIDUAL ERROR (MW)
+                            </div>
+                            <div class="text-right">
+                                <div class="text-headline-md font-bold text-white leading-none font-mono" id="res-hud-r2">0.9982</div>
+                                <div class="text-[8px] text-outline-variant uppercase tracking-widest mt-1">R-Squared Consistency</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Distribution Center -->
+            <div class="space-y-4">
+                <h3 class="text-code-sm font-code-sm uppercase tracking-widest text-primary">Error Distribution Center</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                    <div class="glass-panel p-4 flex flex-col h-56">
+                        <div class="flex justify-between items-center text-code-sm font-bold border-b border-outline-variant/30 pb-2 mb-2">
+                            <span class="text-primary">XGBOOST DISTRIBUTION</span>
+                            <span class="text-on-surface-variant font-mono">MAE: <span id="res-dist-xgb-mae">0.124</span></span>
+                        </div>
+                        <div id="plotly-res-dist-xgb" class="flex-1 w-full"></div>
+                    </div>
+                    <div class="glass-panel p-4 flex flex-col h-56">
+                        <div class="flex justify-between items-center text-code-sm font-bold border-b border-outline-variant/30 pb-2 mb-2">
+                            <span class="text-primary">LIGHTGBM DISTRIBUTION</span>
+                            <span class="text-on-surface-variant font-mono">MAE: <span id="res-dist-lgb-mae">0.131</span></span>
+                        </div>
+                        <div id="plotly-res-dist-lgb" class="flex-1 w-full"></div>
+                    </div>
+                    <div class="glass-panel p-4 flex flex-col h-56">
+                        <div class="flex justify-between items-center text-code-sm font-bold border-b border-outline-variant/30 pb-2 mb-2">
+                            <span class="text-primary">ENSEMBLE DISTRIBUTION</span>
+                            <span class="text-on-surface-variant font-mono">MAE: <span id="res-dist-ens-mae">0.098</span></span>
+                        </div>
+                        <div id="plotly-res-dist-ens" class="flex-1 w-full"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Diagnostics panel -->
+            <div class="flex justify-between items-center border border-outline-variant bg-surface-container-lowest px-4 py-3 text-code-sm text-on-surface-variant">
+                <div class="flex items-center gap-4">
+                    <span>© 2026 POWERCAST DIAGNOSTICS GROUP. ALL RIGHTS RESERVED.</span>
+                    <span class="text-outline-variant">|</span>
+                    <span class="text-primary flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> TERMINAL_LOGS: READY
+                    </span>
+                </div>
+                <div class="flex gap-4 font-mono">
+                     <span>LATENCY: 12ms</span>
+                     <span>CPU: 24%</span>
+                     <span>UPTIME: 99.9%</span>
+                 </div>
+             </div>
+         </section>
+
+     </main>
+
+    <!-- CONSOLE STYLE FOOTER BAR -->
+    <footer class="fixed bottom-0 right-0 w-[calc(100%-64px)] h-8 bg-surface-container-lowest border-t border-outline-variant flex justify-between items-center px-6 z-50 text-[10px] font-mono">
+        <div class="flex items-center gap-6">
+            <span class="text-primary font-bold">© 2026 POWERCAST AI INTEL.</span>
+            <span class="text-on-surface-variant hidden md:inline">SYSTEM CORE: NOMINAL</span>
+            <span class="text-on-surface-variant hidden md:inline">CPU TEMPERATURE: 42°C</span>
+            <span class="text-on-surface-variant hidden md:inline">UPTIME: 1,442 Hours</span>
+        </div>
+        <div class="flex items-center gap-4 text-on-surface-variant">
+            <a href="#" class="hover:text-primary transition-colors">Sync Engine</a>
+            <span>/</span>
+            <a href="#" class="hover:text-primary transition-colors">Node Analytics</a>
+            <span>/</span>
+            <span id="digital-clock" class="text-primary font-bold">23:57:00 UTC</span>
+        </div>
+    </footer>
+
+    <!-- App Frontend Logic script -->
+    <script src="app.js"></script>
+</body>
+</html>

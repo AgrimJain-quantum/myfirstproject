@@ -1,0 +1,25 @@
+/* Custom SCADA Dashboard Stylesheet */
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+.animate-blink {
+    animation: blink 1s step-end infinite;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide the Plotly modebar container for a clean, premium dashboard layout */
+.js-plotly-plot .plotly .modebar-container {
+    display: none !important;
+}
