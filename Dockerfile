@@ -19,4 +19,4 @@ COPY outputs ./outputs
 EXPOSE 7860
 
 # Run uvicorn server
-CMD ["python", "dashboard/server.py"]
+CMD ["uvicorn", "dashboard.server:app", "--host", "0.0.0.0", "--port", "7860"]
