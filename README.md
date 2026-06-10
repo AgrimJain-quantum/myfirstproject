@@ -1,7 +1,7 @@
 ---
 title: PowerCast AI
 emoji: ⚡
-colorFrom: dark
+colorFrom: gray
 colorTo: purple
 sdk: docker
 pinned: false
