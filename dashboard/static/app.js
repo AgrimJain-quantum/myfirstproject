@@ -8,6 +8,24 @@ let activeExplorerLimit = 2016; // last 7 days by default (7 * 288)
 let dashboardSelectedModel = null;
 let activeResidualGroup = 'advanced';
 
+// Configurable API Base URL for Netlify / Decoupled Deployment
+let API_BASE_URL = '';
+
+async function initApiConfig() {
+    try {
+        const response = await fetch('/api_config.json');
+        if (response.ok) {
+            const config = await response.json();
+            if (config.API_BASE_URL) {
+                API_BASE_URL = config.API_BASE_URL.replace(/\/$/, ""); // Strip trailing slash
+                console.log(`🔌 API Base URL configured: ${API_BASE_URL}`);
+            }
+        }
+    } catch (e) {
+        console.log("ℹ️ No api_config.json found, using relative API paths.");
+    }
+}
+
 const RESIDUAL_COLORS = {
     "Linear Regression": "#FF3B30",     // Neon Red
     "Decision Tree": "#FF9500",         // Neon Orange
@@ -28,7 +46,7 @@ let simScene, simCamera, simRenderer, simPoints, simGeometry;
 let bgTime = 0, simTime = 0;
 
 // Initialize on window load
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     // 1. Digital Clock
     setInterval(updateClock, 1000);
     updateClock();
@@ -40,10 +58,13 @@ window.addEventListener('DOMContentLoaded', () => {
     // 3. Start MLOps Terminal log stream ticker
     startLogTicker();
 
-    // 4. Fetch initial API data
+    // 4. Load API Configuration for decoupled hosting (e.g. Netlify)
+    await initApiConfig();
+
+    // 5. Fetch initial API data
     fetchDashboardData();
     
-    // 5. Default Simulation Prediction Call
+    // 6. Default Simulation Prediction Call
     runSimulation();
 });
 
@@ -146,23 +167,23 @@ async function fetchDashboardData() {
         if (syncIcon) syncIcon.classList.add('animate-spin');
 
         // Fetch Metrics
-        const resMetrics = await fetch('/api/metrics');
+        const resMetrics = await fetch(`${API_BASE_URL}/api/metrics`);
         cachedMetrics = await resMetrics.json();
 
         // Fetch Feature Importances
-        const resFeatures = await fetch('/api/features');
+        const resFeatures = await fetch(`${API_BASE_URL}/api/features`);
         cachedFeatures = await resFeatures.json();
 
         // Fetch Optuna History
-        const resOptuna = await fetch('/api/optuna');
+        const resOptuna = await fetch(`${API_BASE_URL}/api/optuna`);
         cachedOptuna = await resOptuna.json();
 
         // Fetch LSTM History
-        const resLstm = await fetch('/api/lstm');
+        const resLstm = await fetch(`${API_BASE_URL}/api/lstm`);
         cachedLstm = await resLstm.json();
 
         // Fetch predictions slice (default to last 7 days = 2016 rows)
-        const resPredictions = await fetch(`/api/predictions?limit=${activeExplorerLimit}`);
+        const resPredictions = await fetch(`${API_BASE_URL}/api/predictions?limit=${activeExplorerLimit}`);
         cachedPredictions = await resPredictions.json();
 
         // Populate Table Grids and Charts
@@ -691,7 +712,7 @@ async function runSimulation() {
     const isPeakHour = document.getElementById('sim-peak').checked;
 
     try {
-        const res = await fetch('/api/predict', {
+        const res = await fetch(`${API_BASE_URL}/api/predict`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

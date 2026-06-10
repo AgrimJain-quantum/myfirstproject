@@ -212,3 +212,43 @@ Possible extensions include:
 ## License
 
 This project is licensed under the MIT License. See `LICENSE` for details.
+
+---
+
+## Deployment Guide (Decoupled Architecture)
+
+This project is prepared for a decoupled production deployment:
+- **Backend:** FastAPI + Docker hosted on **Hugging Face Spaces** (Free CPU Basic 16GB RAM tier).
+- **Models:** Pickled models hosted on a **Hugging Face Model Repository** (resolving GitHub's 100MB file size limit).
+- **Frontend:** HTML, JS, CSS served from **Netlify** (making API requests to the Hugging Face Space).
+- **Source Code:** Main source code hosted on **GitHub** (with pickle files ignored).
+
+### 1. Model Repository Setup (Hugging Face)
+1. Go to [Hugging Face](https://huggingface.co/) and create a new **Model Repository** (e.g., `agrimjain/powercast-models`).
+2. Upload the trained `.pkl` files from your local `pkl files/` directory directly to this repository:
+   - `scaler.pkl`
+   - `rf_model.pkl` (227 MB)
+   - `xgb_model.pkl`
+   - `lgbm_model.pkl`
+
+### 2. Backend Space Setup (Hugging Face Spaces)
+1. Create a new **Space** on Hugging Face.
+2. Select **Docker** as the Space SDK and choose the **Blank** template.
+3. Git clone the Hugging Face Space repository to your local machine.
+4. Copy the code files from this project (excluding `.pkl` files and large datasets) into the Space folder. (Your `Dockerfile` and `requirements.txt` are already in the root directory).
+5. In the Hugging Face Space settings UI, add a new **Environment Variable** (Secret):
+   - Key: `HF_MODEL_REPO`
+   - Value: `YOUR_HF_USERNAME/YOUR_MODEL_REPO_NAME` (e.g., `agrimjain/powercast-models`).
+   *This environment variable tells the backend container where to download the pickle files from on startup.*
+6. Push the code to Hugging Face Git. The Space will build and run.
+
+### 3. Frontend Setup (Netlify)
+1. Upload the `dashboard/static/` folder contents (`index.html`, `styles.css`, `app.js`) to **Netlify** (either via drag-and-drop or by connecting a GitHub repository).
+2. Create a new file in your deployed Netlify static root folder called `api_config.json`:
+   ```json
+   {
+     "API_BASE_URL": "https://YOUR_HF_USERNAME-YOUR_SPACE_NAME.hf.space"
+   }
+   ```
+   *(Replace with your actual Hugging Face Space direct URL. You can find this URL under "Embed this Space" -> "Direct URL" on Hugging Face).*
+3. Save and redeploy. Your Netlify frontend will now seamlessly call the Hugging Face FastAPI backend for live forecasts and simulations!

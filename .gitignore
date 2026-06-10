@@ -1,0 +1,26 @@
+# Ignore Python cache and runtime
+.venv/
+env/
+venv/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Ignore OS metadata files
+.DS_Store
+Thumbs.db
+
+# Ignore large pickle models (these are uploaded to the Hugging Face Model Repository)
+outputs/*.pkl
+pkl files/
+
+# Ignore Netlify development/build caches
+.netlify/
+dist/
+node_modules/
+
+# Ignore local configuration files
+dashboard/static/api_config.json

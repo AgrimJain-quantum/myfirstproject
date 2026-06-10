@@ -22,6 +22,8 @@ if sys.platform.startswith('win'):
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 OUTPUTS_DIR = os.path.join(BASE_DIR, "..", "outputs")
 DATASETS_DIR = os.path.join(BASE_DIR, "..", "datasets")
+CSV_DIR = os.path.join(OUTPUTS_DIR, "csv files")
+JSON_DIR = os.path.join(OUTPUTS_DIR, "json files")
 
 # Global dicts for models and configs
 models = {}
@@ -113,8 +115,8 @@ def calculate_mean_features():
         means = df[FEATURES_ORDER].mean().to_dict()
         
         # Save to outputs folder for caching
-        mean_features_path = os.path.join(OUTPUTS_DIR, "mean_features.json")
-        os.makedirs(OUTPUTS_DIR, exist_ok=True)
+        mean_features_path = os.path.join(JSON_DIR, "mean_features.json")
+        os.makedirs(JSON_DIR, exist_ok=True)
         with open(mean_features_path, "w") as out:
             json.dump(means, out, indent=4)
         print("✅ Saved computed baseline feature averages to outputs/mean_features.json")
@@ -122,6 +124,27 @@ def calculate_mean_features():
     except Exception as ex:
         print(f"⚠️ Error computing feature averages: {ex}. Using fallback averages.")
         return {f: 0.0 for f in FEATURES_ORDER}
+
+def download_models_if_missing():
+    """Auto-download models from Hugging Face Model Repository if missing and env is set."""
+    hf_repo = os.environ.get("HF_MODEL_REPO", "")
+    if not hf_repo:
+        return
+    
+    import urllib.request
+    os.makedirs(OUTPUTS_DIR, exist_ok=True)
+    model_files = ["scaler.pkl", "rf_model.pkl", "xgb_model.pkl", "lgbm_model.pkl"]
+    
+    for filename in model_files:
+        filepath = os.path.join(OUTPUTS_DIR, filename)
+        if not os.path.exists(filepath):
+            url = f"https://huggingface.co/{hf_repo}/resolve/main/{filename}"
+            print(f"📥 Downloading {filename} from HF Model Repository: {url} ...")
+            try:
+                urllib.request.urlretrieve(url, filepath)
+                print(f"✅ Downloaded {filename} successfully.")
+            except Exception as e:
+                print(f"❌ Failed to download {filename}: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -131,16 +154,31 @@ async def lifespan(app: FastAPI):
     
     # 1. Load pickle files
     try:
-        scaler = joblib.load(os.path.join(OUTPUTS_DIR, "scaler.pkl"))
-        models["Random Forest"] = joblib.load(os.path.join(OUTPUTS_DIR, "rf_model.pkl"))
-        models["XGBoost"] = joblib.load(os.path.join(OUTPUTS_DIR, "xgb_model.pkl"))
-        models["LightGBM"] = joblib.load(os.path.join(OUTPUTS_DIR, "lgbm_model.pkl"))
-        print("✅ Models and Scaler pickles loaded successfully.")
+        # Trigger Hugging Face download if environment variable is set
+        download_models_if_missing()
+        
+        # Locate pickle directory (support standard outputs folder and external fallback)
+        pkl_dir = OUTPUTS_DIR
+        if not os.path.exists(os.path.join(OUTPUTS_DIR, "scaler.pkl")):
+            fallback_pkl_dir = r"C:\Users\Agrim Jain\Desktop\Coding\pkl files"
+            if os.path.exists(os.path.join(fallback_pkl_dir, "scaler.pkl")):
+                pkl_dir = fallback_pkl_dir
+                print(f"ℹ️ Local pkl files detected in fallback directory: {pkl_dir}")
+        
+        scaler = joblib.load(os.path.join(pkl_dir, "scaler.pkl"))
+        models["Random Forest"] = joblib.load(os.path.join(pkl_dir, "rf_model.pkl"))
+        models["XGBoost"] = joblib.load(os.path.join(pkl_dir, "xgb_model.pkl"))
+        models["LightGBM"] = joblib.load(os.path.join(pkl_dir, "lgbm_model.pkl"))
+        print(f"✅ Models and Scaler pickles loaded successfully from: {pkl_dir}")
     except Exception as e:
         print(f"❌ Error loading pickle models: {e}. Inference endpoint will fail.")
     
     # 2. Load dashboard config
-    config_path = os.path.join(OUTPUTS_DIR, "dashboard_config.json")
+    config_path = os.path.join(JSON_DIR, "dashboard_config.json")
+    if not os.path.exists(config_path):
+        # Fallback to standard location
+        config_path = os.path.join(OUTPUTS_DIR, "dashboard_config.json")
+        
     if os.path.exists(config_path):
         try:
             with open(config_path, "r") as f:
@@ -153,7 +191,11 @@ async def lifespan(app: FastAPI):
         dashboard_config = {"w_xgb": 0.5, "w_lgbm": 0.5}
 
     # 3. Load baseline feature averages
-    mean_features_path = os.path.join(OUTPUTS_DIR, "mean_features.json")
+    mean_features_path = os.path.join(JSON_DIR, "mean_features.json")
+    if not os.path.exists(mean_features_path):
+        # Fallback to standard location
+        mean_features_path = os.path.join(OUTPUTS_DIR, "mean_features.json")
+        
     if os.path.exists(mean_features_path):
         try:
             with open(mean_features_path, "r") as f:
@@ -167,23 +209,28 @@ async def lifespan(app: FastAPI):
 
     # 4. Load CSV outputs into memory caching for speed
     try:
+        # Helper to resolve CSV paths with fallback
+        def get_csv_path(filename):
+            nested_path = os.path.join(CSV_DIR, filename)
+            return nested_path if os.path.exists(nested_path) else os.path.join(OUTPUTS_DIR, filename)
+
         # Load metrics
-        metrics_df = pd.read_csv(os.path.join(OUTPUTS_DIR, "model_metrics.csv"))
+        metrics_df = pd.read_csv(get_csv_path("model_metrics.csv"))
         metrics_cache = metrics_df.to_dict(orient="records")
         
         # Load feature importances
-        features_df = pd.read_csv(os.path.join(OUTPUTS_DIR, "feature_importances.csv"))
+        features_df = pd.read_csv(get_csv_path("feature_importances.csv"))
         features_cache = features_df.to_dict(orient="records")
         
         # Load Optuna histories
-        optuna_xgb_cache = pd.read_csv(os.path.join(OUTPUTS_DIR, "optuna_xgb_history.csv")).to_dict(orient="records")
-        optuna_lgbm_cache = pd.read_csv(os.path.join(OUTPUTS_DIR, "optuna_lgbm_history.csv")).to_dict(orient="records")
+        optuna_xgb_cache = pd.read_csv(get_csv_path("optuna_xgb_history.csv")).to_dict(orient="records")
+        optuna_lgbm_cache = pd.read_csv(get_csv_path("optuna_lgbm_history.csv")).to_dict(orient="records")
         
         # Load LSTM history
-        lstm_hist_cache = pd.read_csv(os.path.join(OUTPUTS_DIR, "lstm_history.csv")).to_dict(orient="records")
+        lstm_hist_cache = pd.read_csv(get_csv_path("lstm_history.csv")).to_dict(orient="records")
         
         # Load test predictions (for rendering charts)
-        predictions_df = pd.read_csv(os.path.join(OUTPUTS_DIR, "test_predictions.csv"))
+        predictions_df = pd.read_csv(get_csv_path("test_predictions.csv"))
         predictions_cache = predictions_df.to_dict(orient="records")
         print("✅ Data files loaded and cached successfully.")
     except Exception as e:
@@ -336,4 +383,10 @@ app.mount("/", StaticFiles(directory=os.path.join(BASE_DIR, "static"), html=True
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="127.0.0.1", port=8001, reload=True)
+    # Respect PORT env variable (default to 8001 locally, 7860 on Hugging Face Spaces)
+    port = int(os.environ.get("PORT", 8001))
+    # Bind to 0.0.0.0 if running in Docker/HuggingFace or dynamic PORT environment
+    host = "0.0.0.0" if os.environ.get("PORT") or os.environ.get("HF_MODEL_REPO") else "127.0.0.1"
+    reload = True if host == "127.0.0.1" else False
+    print(f"🚀 Starting server on {host}:{port} (reload={reload})")
+    uvicorn.run("server:app", host=host, port=port, reload=reload)
