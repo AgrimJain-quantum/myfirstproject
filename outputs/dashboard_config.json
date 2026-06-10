@@ -1,0 +1,5 @@
+{
+    "w_xgb": 0.43093493335956323,
+    "w_lgbm": 0.5690650666404368,
+    "best_model": "Linear Regression"
+}
