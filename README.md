@@ -1,3 +1,12 @@
+---
+title: PowerCast AI
+emoji: ⚡
+colorFrom: dark
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # Short-Term Electricity Load Forecasting
 
 This project implements a complete short-term electricity load forecasting pipeline for high-resolution power demand data. It compares classical machine learning models, boosting models, an inverse-RMSE weighted ensemble, and an LSTM network using 5-minute electricity demand and weather observations from Delhi, India.
