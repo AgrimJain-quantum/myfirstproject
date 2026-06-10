@@ -240,11 +240,7 @@
                 <span class="material-symbols-outlined text-[20px]">explore</span>
                 <span class="text-[8px] font-bold">EXPL</span>
             </button>
-            <!-- Forecast Simulator -->
-            <button id="nav-simulator" onclick="switchTab('simulator')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-all duration-200">
-                <span class="material-symbols-outlined text-[20px]">simulation</span>
-                <span class="text-[8px] font-bold">SIM</span>
-            </button>
+
             <!-- MLOps Pipeline -->
             <button id="nav-mlops" onclick="switchTab('mlops')" class="w-12 h-12 flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-all duration-200">
                 <span class="material-symbols-outlined text-[20px]">settings_input_component</span>
@@ -319,9 +315,7 @@
                     <button onclick="switchTab('dashboard')" class="bg-primary text-black px-8 py-3 font-bold tracking-tighter glow-hover transition-all duration-300">
                         INITIALIZE COMMANDS
                     </button>
-                    <button onclick="switchTab('simulator')" class="border border-white text-white px-8 py-3 font-bold tracking-tighter hover:bg-white/5 transition-all duration-300">
-                        SCENARIO SIMULATOR
-                    </button>
+
                 </div>
             </div>
 
@@ -355,7 +349,7 @@
                     <h3 class="text-headline-sm font-headline-md text-primary uppercase">System Access Hub</h3>
                     <span class="text-code-sm font-code-sm text-outline-variant">SELECT MODULE FOR TELEMETRY</span>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div onclick="switchTab('dashboard')" class="group glass-panel p-8 cursor-pointer hover:border-primary transition-all duration-300 relative overflow-hidden">
                         <div class="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
                             <span class="material-symbols-outlined text-[100px]">dashboard</span>
@@ -374,17 +368,6 @@
                         <span class="material-symbols-outlined text-primary text-[32px] mb-8">compare_arrows</span>
                         <h4 class="text-headline-sm font-headline-md text-primary mb-2">Benchmarking Lab</h4>
                         <p class="text-body-md text-on-surface-variant mb-6">Side-by-side performance evaluation of boosting algorithms, neural networks, and ensembles.</p>
-                        <div class="flex items-center text-code-sm text-primary font-bold group-hover:gap-4 transition-all duration-300">
-                            ACCESS MODULE <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                        </div>
-                    </div>
-                    <div onclick="switchTab('simulator')" class="group glass-panel p-8 cursor-pointer hover:border-primary transition-all duration-300 relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <span class="material-symbols-outlined text-[100px]">simulation</span>
-                        </div>
-                        <span class="material-symbols-outlined text-primary text-[32px] mb-8">simulation</span>
-                        <h4 class="text-headline-sm font-headline-md text-primary mb-2">Scenario Simulator</h4>
-                        <p class="text-body-md text-on-surface-variant mb-6">What-if forecasting tool to predict load impact based on temperature, weekday, and humidity fluctuations.</p>
                         <div class="flex items-center text-code-sm text-primary font-bold group-hover:gap-4 transition-all duration-300">
                             ACCESS MODULE <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                         </div>
@@ -663,214 +646,7 @@
             </div>
         </section>
 
-        <!-- 5. FORECAST SIMULATOR TAB -->
-        <section id="tab-simulator" class="tab-content hidden p-gutter space-y-gutter pb-20 h-[calc(100vh-100px)] flex flex-col">
-            <div class="grid grid-cols-12 gap-px bg-outline-variant flex-1 border border-outline-variant min-h-[480px]">
-                
-                <!-- LEFT PANEL: Variable Controls -->
-                <div class="col-span-12 lg:col-span-3 bg-background flex flex-col p-6 overflow-y-auto no-scrollbar justify-between">
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-2 border-b border-outline-variant/35 pb-2">
-                            <span class="material-symbols-outlined text-primary text-sm">tune</span>
-                            <h2 class="text-label-xs font-label-xs uppercase tracking-widest text-on-surface-variant">Variable Inputs</h2>
-                        </div>
-                        
-                        <!-- Temp slider -->
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-end text-code-sm">
-                                <label class="text-[10px] font-bold text-red-500 uppercase">Temperature (°C)</label>
-                                <span class="text-headline-sm font-bold text-red-500" id="sim-temp-val">28</span>
-                            </div>
-                            <input type="range" class="w-full slider-temp" id="sim-temp" min="-5" max="50" step="0.5" value="28" oninput="document.getElementById('sim-temp-val').innerText = this.value"/>
-                        </div>
 
-                        <!-- Hum slider -->
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-end text-code-sm">
-                                <label class="text-[10px] font-bold text-blue-500 uppercase">Relative Humidity (%)</label>
-                                <span class="text-headline-sm font-bold text-blue-500" id="sim-rhum-val">60</span>
-                            </div>
-                            <input type="range" class="w-full slider-rhum" id="sim-rhum" min="0" max="100" value="60" oninput="document.getElementById('sim-rhum-val').innerText = this.value"/>
-                        </div>
-
-                        <!-- Pres slider -->
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-end text-code-sm">
-                                <label class="text-[10px] font-bold text-on-surface-variant uppercase">Pressure (hPa)</label>
-                                <span class="text-headline-sm font-bold text-primary" id="sim-pres-val">1008</span>
-                            </div>
-                            <input type="range" class="w-full" id="sim-pres" min="950" max="1050" value="1008" oninput="document.getElementById('sim-pres-val').innerText = this.value"/>
-                        </div>
-
-                        <!-- Wind slider -->
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-end text-code-sm">
-                                <label class="text-[10px] font-bold text-emerald-500 uppercase">Wind Speed (km/h)</label>
-                                <span class="text-headline-sm font-bold text-emerald-500" id="sim-wspd-val">8.5</span>
-                            </div>
-                            <input type="range" class="w-full slider-wspd" id="sim-wspd" min="0" max="80" step="0.5" value="8.5" oninput="document.getElementById('sim-wspd-val').innerText = this.value"/>
-                        </div>
-
-                        <!-- Hour slider -->
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-end text-code-sm">
-                                <label class="text-[10px] font-bold text-on-surface-variant uppercase">Hour of Day (24h)</label>
-                                <span class="text-headline-sm font-bold text-primary" id="sim-hour-val">18</span>
-                            </div>
-                            <input type="range" class="w-full" id="sim-hour" min="0" max="23" value="18" oninput="document.getElementById('sim-hour-val').innerText = this.value; checkPeakHourFlag();"/>
-                        </div>
-
-                        <!-- Weekday selector -->
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-on-surface-variant uppercase block">Weekday</label>
-                            <select id="sim-weekday" class="bg-black border border-outline-variant text-primary font-code-sm text-body-md focus:border-primary focus:ring-0 w-full py-1.5 px-3">
-                                <option value="0">Monday</option>
-                                <option value="1">Tuesday</option>
-                                <option value="2" selected>Wednesday</option>
-                                <option value="3">Thursday</option>
-                                <option value="4">Friday</option>
-                                <option value="5">Saturday</option>
-                                <option value="6">Sunday</option>
-                            </select>
-                        </div>
-
-                        <!-- Peak Hour Checkbox (gated automatically by hour slider but toggleable) -->
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" id="sim-peak" class="bg-black border-outline-variant text-primary focus:ring-0 focus:ring-offset-0 rounded-none w-4 h-4" checked/>
-                            <label for="sim-peak" class="text-[10px] font-bold text-on-surface-variant uppercase">Peak Demand Period (18-21h)</label>
-                        </div>
-                    </div>
-
-                    <div class="pt-8">
-                        <button onclick="runSimulation()" class="w-full py-4 bg-primary text-background font-bold text-label-xs tracking-widest hover:active-glow transition-all">
-                            GENERATE SIMULATION
-                        </button>
-                        <button onclick="resetSimulationDefaults()" class="w-full py-2.5 mt-2 border border-outline-variant text-primary font-bold text-[10px] tracking-widest hover:bg-surface-container-high transition-all">
-                            RESET DEFAULTS
-                        </button>
-                    </div>
-                </div>
-
-                <!-- CENTER PANEL: Interactive Three.js Visual Viewport -->
-                <div class="col-span-12 lg:col-span-6 bg-surface-container-lowest relative flex flex-col items-center justify-center overflow-hidden border-x border-outline-variant">
-                    <!-- HUD overlay grids -->
-                    <div class="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between z-10">
-                        <div class="relative w-full flex flex-col items-center gap-2 h-20">
-                            <div class="absolute left-0 top-0 w-16 h-16 border-l border-t border-white/20"></div>
-                            <span class="text-[10px] tracking-[0.2em] font-bold text-primary bg-black/80 border border-white/10 px-4 py-1.5 z-20 h-fit">
-                                TELEMETRY TARGET: NEURAL-FLUX-SIMULATOR
-                            </span>
-                            <div class="flex gap-4 text-[9px] font-bold tracking-wider z-20">
-                                <span class="flex items-center gap-1.5 text-red-500 bg-black/85 border border-red-500/20 px-2.5 py-1">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_6px_#EF4444]"></span> TEMP (R)
-                                </span>
-                                <span class="flex items-center gap-1.5 text-emerald-500 bg-black/85 border border-emerald-500/20 px-2.5 py-1">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10B981]"></span> WIND (G)
-                                </span>
-                                <span class="flex items-center gap-1.5 text-blue-500 bg-black/85 border border-blue-500/20 px-2.5 py-1">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_6px_#3B82F6]"></span> HUMIDITY (B)
-                                </span>
-                            </div>
-                            <div class="absolute right-0 top-0 w-16 h-16 border-r border-t border-white/20"></div>
-                        </div>
-                        <div class="flex justify-between items-end">
-                            <div class="w-16 h-16 border-l border-b border-white/20"></div>
-                            <div class="w-16 h-16 border-r border-b border-white/20"></div>
-                        </div>
-                    </div>
-                    <!-- Internal 3D terrain canvas will lock here -->
-                    <div id="sim-threejs-container" class="w-full h-full absolute inset-0 z-0 opacity-60"></div>
-                </div>
-
-                <!-- RIGHT PANEL: Live Inference results output -->
-                <div class="col-span-12 lg:col-span-3 bg-background p-6 flex flex-col justify-between overflow-y-auto no-scrollbar">
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-2 border-b border-outline-variant/35 pb-2">
-                            <span class="material-symbols-outlined text-primary text-sm">monitoring</span>
-                            <h2 class="text-label-xs font-label-xs uppercase tracking-widest text-on-surface-variant">Inference Output</h2>
-                        </div>
-
-                        <!-- Real-time calculation output box -->
-                        <div class="glass-panel p-4 flex flex-col gap-1 border-primary/20 neon-edge holographic-glow">
-                            <span class="text-label-xs text-on-surface-variant uppercase">Ensemble Forecast</span>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-[42px] font-bold text-primary leading-none" id="sim-pred-ensemble">----</span>
-                                <span class="text-headline-sm font-bold text-primary/60">MW</span>
-                            </div>
-                        </div>
-
-                        <!-- Models breakdown -->
-                        <div class="space-y-4 pt-2">
-                            <span class="text-[10px] font-bold text-on-surface-variant uppercase block border-b border-outline-variant/30 pb-1">Predictions by Model</span>
-                            <div class="space-y-2 text-code-sm">
-                                <div class="flex justify-between items-center p-2 bg-black border border-outline-variant">
-                                    <span>XGBoost (Tuned)</span>
-                                    <span class="font-bold text-white" id="sim-pred-xgb">--- MW</span>
-                                </div>
-                                <div class="flex justify-between items-center p-2 bg-black border border-outline-variant">
-                                    <span>LightGBM (Tuned)</span>
-                                    <span class="font-bold text-white" id="sim-pred-lgb">--- MW</span>
-                                </div>
-                                <div class="flex justify-between items-center p-2 bg-black border border-outline-variant">
-                                    <span>Random Forest</span>
-                                    <span class="font-bold text-white" id="sim-pred-rf">--- MW</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pt-8">
-                        <button onclick="downloadJSON('prediction')" class="w-full py-3 border border-primary text-primary text-label-xs tracking-widest hover:bg-primary hover:text-background transition-all">
-                            EXPORT INFERENCE REPORT
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- What-if scenarios analysis ribbon -->
-            <div class="h-44 border-t border-outline-variant bg-surface-container-lowest p-gutter flex gap-4 overflow-x-auto no-scrollbar">
-                <div class="flex-shrink-0 flex flex-col justify-center border-r border-outline-variant pr-gutter">
-                    <h2 class="text-label-xs font-label-xs uppercase tracking-[0.2em] text-primary mb-1">Grid Stress Scenarios</h2>
-                    <p class="text-code-sm font-code-sm text-on-surface-variant max-w-[150px]">Pre-calculated extreme event modeling.</p>
-                </div>
-                <!-- Card 1 -->
-                <div onclick="applyScenario(38.0, 75.0, 1005.0, 5.0, 19, 2, true)" class="flex-shrink-0 w-80 glass-panel p-4 flex flex-col justify-between hover:border-primary transition-all cursor-pointer group">
-                    <div class="flex justify-between items-start">
-                        <span class="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 border border-primary/20">SUMMER PEAK ANOMALY</span>
-                        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
-                    </div>
-                    <p class="text-body-sm text-on-surface mt-2">Extreme Heat (38°C) + High Humidity during Peak hour.</p>
-                    <div class="flex justify-between items-end mt-4">
-                        <span class="text-code-sm text-on-surface-variant">Estimated Load</span>
-                        <span class="text-headline-sm font-bold text-primary">3,800+ MW</span>
-                    </div>
-                </div>
-                <!-- Card 2 -->
-                <div onclick="applyScenario(12.0, 40.0, 1018.0, 25.0, 8, 6, false)" class="flex-shrink-0 w-80 glass-panel p-4 flex flex-col justify-between hover:border-primary transition-all cursor-pointer group">
-                    <div class="flex justify-between items-start">
-                        <span class="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 border border-primary/20">WINTER SUNRISE SURGE</span>
-                        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
-                    </div>
-                    <p class="text-body-sm text-on-surface mt-2">Cold Wave (12°C) + High Wind Speed at 8:00 AM on Sunday.</p>
-                    <div class="flex justify-between items-end mt-4">
-                        <span class="text-code-sm text-on-surface-variant">Estimated Load</span>
-                        <span class="text-headline-sm font-bold text-primary">1,900+ MW</span>
-                    </div>
-                </div>
-                <!-- Card 3 -->
-                <div onclick="applyScenario(25.0, 50.0, 1012.0, 10.0, 14, 5, false)" class="flex-shrink-0 w-80 glass-panel p-4 flex flex-col justify-between hover:border-primary transition-all cursor-pointer group">
-                    <div class="flex justify-between items-start">
-                        <span class="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 border border-primary/20">NOMINAL WEEKEND OFF-PEAK</span>
-                        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">arrow_forward</span>
-                    </div>
-                    <p class="text-body-sm text-on-surface mt-2">Mild temperature (25°C) at 2:00 PM on Saturday.</p>
-                    <div class="flex justify-between items-end mt-4">
-                        <span class="text-code-sm text-on-surface-variant">Estimated Load</span>
-                        <span class="text-headline-sm font-bold text-primary">2,400+ MW</span>
-                    </div>
-                </div>
-            </div>
-        </section>
 
         <!-- 6. MLOPS PIPELINE TAB -->
         <section id="tab-mlops" class="tab-content hidden p-gutter space-y-gutter pb-20">

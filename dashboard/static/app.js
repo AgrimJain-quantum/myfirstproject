@@ -42,8 +42,7 @@ const RESIDUAL_COLORS = {
 
 // Three.js Particle Terrain Variables
 let bgScene, bgCamera, bgRenderer, bgPoints, bgGeometry;
-let simScene, simCamera, simRenderer, simPoints, simGeometry;
-let bgTime = 0, simTime = 0;
+let bgTime = 0;
 
 // Initialize on window load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -53,7 +52,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // 2. Setup Three.js Animations
     initBackgroundTerrain();
-    initSimulatorTerrain();
 
     // 3. Start MLOps Terminal log stream ticker
     startLogTicker();
@@ -63,9 +61,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // 5. Fetch initial API data
     fetchDashboardData();
-    
-    // 6. Default Simulation Prediction Call
-    runSimulation();
 });
 
 // Digital Clock Update
@@ -112,7 +107,6 @@ function switchTab(tabId) {
             'dashboard': 'Executive Control Node',
             'comparison': 'Benchmarking Laboratory',
             'explorer': 'Load Curve Observatory',
-            'simulator': 'What-If Simulation Engine',
             'mlops': 'MLOps Orchestrator',
             'residual': 'RESIDUAL_LAB_OS // v4.0.2-ALPHA'
         };
@@ -146,15 +140,7 @@ function switchTab(tabId) {
             }
         });
         
-        // Handle Three.js resizing for simulator viewport
-        if (tabId === 'simulator' && simRenderer && simCamera) {
-            const container = document.getElementById('sim-threejs-container');
-            const w = container.clientWidth;
-            const h = container.clientHeight;
-            simRenderer.setSize(w, h);
-            simCamera.aspect = w / h;
-            simCamera.updateProjectionMatrix();
-        }
+
     }, 100);
 }
 
@@ -699,92 +685,7 @@ function renderMlopsTab() {
     Plotly.newPlot('plotly-lstm-loss-chart', [lossTrace, valLossTrace], lossLayout, { displayModeBar: false, responsive: true });
 }
 
-// -------------------------------------------------------------
-// RENDER TAB: FORECAST SIMULATOR
-// -------------------------------------------------------------
-async function runSimulation() {
-    const temp = parseFloat(document.getElementById('sim-temp').value);
-    const rhum = parseFloat(document.getElementById('sim-rhum').value);
-    const pres = parseFloat(document.getElementById('sim-pres').value);
-    const wspd = parseFloat(document.getElementById('sim-wspd').value);
-    const hour = parseInt(document.getElementById('sim-hour').value);
-    const weekday = parseInt(document.getElementById('sim-weekday').value);
-    const isPeakHour = document.getElementById('sim-peak').checked;
 
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/predict`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                temp: temp,
-                rhum: rhum,
-                pres: pres,
-                wspd: wspd,
-                hour: hour,
-                weekday: weekday,
-                is_peak_hour: isPeakHour
-            })
-        });
-
-        if (!res.ok) {
-            throw new Error(`Inference HTTP error: ${res.status}`);
-        }
-
-        const predictions = await res.json();
-        
-        // Update values in UI
-        document.getElementById('sim-pred-ensemble').textContent = Math.round(predictions["Ensemble (XGB+LGBM)"]).toLocaleString();
-        document.getElementById('sim-pred-xgb').textContent = `${Math.round(predictions["XGBoost (Tuned)"]).toLocaleString()} MW`;
-        document.getElementById('sim-pred-lgb').textContent = `${Math.round(predictions["LightGBM (Tuned)"]).toLocaleString()} MW`;
-        document.getElementById('sim-pred-rf').textContent = `${Math.round(predictions["Random Forest"]).toLocaleString()} MW`;
-        
-        writeLog(`SIM_RUN: Inference complete. ensemble_load = ${Math.round(predictions["Ensemble (XGB+LGBM)"])} MW`);
-
-        // Trigger dynamic updates to the simulator Three.js terrain based on results
-        updateSimTerrainWaves(temp, wspd, predictions["Ensemble (XGB+LGBM)"]);
-    } catch (ex) {
-        console.error("Simulation run failed:", ex);
-        writeLog(`SIM_ERROR: Simulation calculation failed: ${ex.message}`, true);
-    }
-}
-
-function checkPeakHourFlag() {
-    const hour = parseInt(document.getElementById('sim-hour').value);
-    const checkbox = document.getElementById('sim-peak');
-    if (checkbox) {
-        // peak hours are between 18 and 21h inclusive
-        checkbox.checked = (hour >= 18 && hour <= 21);
-    }
-}
-
-function applyScenario(temp, rhum, pres, wspd, hour, weekday, isPeak) {
-    // Update inputs
-    document.getElementById('sim-temp').value = temp;
-    document.getElementById('sim-temp-val').innerText = temp;
-
-    document.getElementById('sim-rhum').value = rhum;
-    document.getElementById('sim-rhum-val').innerText = rhum;
-
-    document.getElementById('sim-pres').value = pres;
-    document.getElementById('sim-pres-val').innerText = pres;
-
-    document.getElementById('sim-wspd').value = wspd;
-    document.getElementById('sim-wspd-val').innerText = wspd;
-
-    document.getElementById('sim-hour').value = hour;
-    document.getElementById('sim-hour-val').innerText = hour;
-
-    document.getElementById('sim-weekday').value = weekday;
-
-    document.getElementById('sim-peak').checked = isPeak;
-
-    writeLog(`SCENARIO: Applied predefined stress template.`);
-    runSimulation();
-}
-
-function resetSimulationDefaults() {
-    applyScenario(28.0, 60.0, 1008.0, 8.5, 18, 2, true);
-}
 
 // -------------------------------------------------------------
 // MLOPS TELEMETRY LOGGER TICKER
@@ -853,28 +754,7 @@ function downloadJSON(type) {
     if (type === 'metrics') {
         dataToExport = { metrics: cachedMetrics, features: cachedFeatures };
         filename = "powercast_benchmarking_report.json";
-    } else if (type === 'prediction') {
-        const ensemble = document.getElementById('sim-pred-ensemble').textContent;
-        dataToExport = {
-            timestamp: new Date().toISOString(),
-            input_variables: {
-                temperature: parseFloat(document.getElementById('sim-temp').value),
-                humidity: parseFloat(document.getElementById('sim-rhum').value),
-                pressure: parseFloat(document.getElementById('sim-pres').value),
-                wind_speed: parseFloat(document.getElementById('sim-wspd').value),
-                hour: parseInt(document.getElementById('sim-hour').value),
-                weekday: parseInt(document.getElementById('sim-weekday').value),
-                is_peak_hour: document.getElementById('sim-peak').checked
-            },
-            predictions: {
-                ensemble_load_mw: parseFloat(ensemble.replace(/,/g, '')),
-                xgb_load_mw: parseFloat(document.getElementById('sim-pred-xgb').textContent),
-                lgb_load_mw: parseFloat(document.getElementById('sim-pred-lgb').textContent),
-                rf_load_mw: parseFloat(document.getElementById('sim-pred-rf').textContent)
-            }
-        };
-        filename = "simulation_inference_report.json";
-    }
+
 
     const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 4));
     const dlAnchorElem = document.createElement('a');
@@ -984,134 +864,7 @@ function animateBackground() {
     bgRenderer.render(bgScene, bgCamera);
 }
 
-// SIMULATOR VIEWPORT TERRAIN
-let simWaveSpeed = 0.01;
-let simWaveHeight = 30;
 
-function initSimulatorTerrain() {
-    const container = document.getElementById('sim-threejs-container');
-    if (!container) return;
-
-    const width = container.clientWidth || 400;
-    const height = container.clientHeight || 300;
-
-    simScene = new THREE.Scene();
-    simCamera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    simCamera.position.set(0, 100, 300);
-    simCamera.lookAt(0, 0, 0);
-
-    simRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    simRenderer.setSize(width, height);
-    simRenderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(simRenderer.domElement);
-
-    const segments = 60;
-    const spacing = 8;
-    const particleCount = segments * segments;
-
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-
-    simGeometry = new THREE.BufferGeometry();
-
-    for (let i = 0; i < segments; i++) {
-        for (let j = 0; j < segments; j++) {
-            const idx = (i * segments + j);
-            const x = (i - segments / 2) * spacing;
-            const z = (j - segments / 2) * spacing;
-
-            positions[idx * 3] = x;
-            positions[idx * 3 + 1] = 0;
-            positions[idx * 3 + 2] = z;
-
-            // Base primary white
-            colors[idx * 3] = 1.0;
-            colors[idx * 3 + 1] = 1.0;
-            colors[idx * 3 + 2] = 1.0;
-        }
-    }
-
-    simGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    simGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const particleMaterial = new THREE.PointsMaterial({
-        size: 1.8,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.75,
-        sizeAttenuation: true
-    });
-
-    simPoints = new THREE.Points(simGeometry, particleMaterial);
-    simScene.add(simPoints);
-
-    animateSimulator();
-}
-
-function animateSimulator() {
-    requestAnimationFrame(animateSimulator);
-    simTime += simWaveSpeed;
-
-    const posAttr = simGeometry.attributes.position;
-    const colorAttr = simGeometry.attributes.color;
-    const segments = 60;
-
-    // Get active slider inputs
-    const tempVal = parseFloat(document.getElementById('sim-temp').value);
-    const rhumVal = parseFloat(document.getElementById('sim-rhum').value);
-    const wspdVal = parseFloat(document.getElementById('sim-wspd').value);
-
-    // Calculate ratios (0.0 to 1.0)
-    // Temperature range: -5 to 50 (range = 55)
-    const tempRatio = Math.min(1.0, Math.max(0.0, (tempVal - (-5)) / 55));
-    // Humidity range: 0 to 100 (range = 100)
-    const rhumRatio = Math.min(1.0, Math.max(0.0, rhumVal / 100));
-    // Wind Speed range: 0 to 80 (range = 80)
-    const wspdRatio = Math.min(1.0, Math.max(0.0, wspdVal / 80));
-
-    for (let i = 0; i < segments; i++) {
-        for (let j = 0; j < segments; j++) {
-            const idx = (i * segments + j);
-            const x = posAttr.array[idx * 3];
-            const z = posAttr.array[idx * 3 + 2];
-
-            // Waving calculations based on reactive inputs
-            let y = Math.sin(x * 0.02 + simTime) * Math.cos(z * 0.02 + simTime) * simWaveHeight;
-            posAttr.array[idx * 3 + 1] = y;
-
-            // Dynamic color shading based on wave peaks (peaks are brighter)
-            const ratio = (y + simWaveHeight) / (simWaveHeight * 2);
-            const brightness = 0.25 + ratio * 0.75;
-            
-            // Mix: active variables determine the color component, base brightness dictates luminance
-            colorAttr.array[idx * 3]     = brightness * (0.2 + 0.8 * tempRatio); // Red maps to Temp
-            colorAttr.array[idx * 3 + 1] = brightness * (0.2 + 0.8 * wspdRatio); // Green maps to Wind Speed
-            colorAttr.array[idx * 3 + 2] = brightness * (0.2 + 0.8 * rhumRatio); // Blue maps to Humidity
-        }
-    }
-
-    posAttr.needsUpdate = true;
-    colorAttr.needsUpdate = true;
-    
-    simPoints.rotation.y = simTime * 0.08;
-    simRenderer.render(simScene, simCamera);
-}
-
-function updateSimTerrainWaves(temp, windSpeed, prediction) {
-    // Higher temp -> bigger height waves (thermal stress simulation)
-    simWaveHeight = Math.max(10, (temp / 45) * 60);
-
-    // Higher wind speed -> faster motion waves
-    simWaveSpeed = Math.max(0.003, (windSpeed / 100) * 0.05);
-
-    // Update color based on load prediction severity
-    if (prediction > 4000) {
-        // Red alert color style in points material color array (make it white-hot glow)
-        simPoints.material.color.setHex(0xffffff);
-    } else {
-        simPoints.material.color.setHex(0xcccccc);
-    }
-}
 
 // -------------------------------------------------------------
 // RESIDUAL ANALYSIS LABORATORY FUNCTIONS
