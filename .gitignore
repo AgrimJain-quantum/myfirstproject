@@ -23,4 +23,5 @@ dist/
 node_modules/
 
 # Ignore local configuration files
-dashboard/static/api_config.json
+.vercel
+
