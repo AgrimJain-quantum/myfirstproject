@@ -1,0 +1,9 @@
+# Ignore backend files to prevent Vercel from auto-detecting Python/FastAPI
+requirements.txt
+Dockerfile
+dashboard/server.py
+project versions/
+datasets/
+outputs/
+.venv/
+.git/
